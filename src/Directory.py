@@ -4,7 +4,7 @@ from Shared import HostData
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 2048
 MAX_CONN = 1
 
 class Directory:
@@ -39,7 +39,7 @@ class Directory:
     print("Total Entries: ", len(self.routers), flush=True)
 
   def handleRouteRequest(self, HostData, addr):
-    return pickle.dumps(self.routers)
+    return pickle.dumps(list(self.routers))
 
   def accept(self):
     while(True):
