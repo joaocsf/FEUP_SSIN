@@ -1,11 +1,13 @@
 import socket
+from Crypto.PublicKey import RSA
+from Crypto import Random
 import pickle
 import sys
-from Shared import HostData
+from Shared import HostData, split
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5007
-BUFFER_SIZE = 2048
+BUFFER_SIZE = 10000000
 MESSAGE = "Potatos"
 MAX_CONN = 10
 
@@ -17,14 +19,21 @@ class Router:
         self.TCP_PORT = port
         self.BUFFER_SIZE = bufferSize
         self.MAX_CONN = maxConn
+        self.initializeRSA()
         self.ConnectToDirectory(serverData)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((self.TCP_IP, self.TCP_PORT))
         self.socket.listen(self.MAX_CONN)
+    
+    def initializeRSA(self):
+        random_gen = Random.new().read
+        self.key = RSA.generate(2048)
+        self.publicKey = self.key.publickey()
 
     def ConnectToDirectory(self, serverData):
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        data = HostData(self.TCP_PORT)
+        publicKeyExported = self.publicKey.exportKey()
+        data = HostData(self.TCP_PORT, publicKeyExported)
         server.connect(serverData)
         server.send(data.serialize())
         result = server.recv(BUFFER_SIZE)
@@ -34,27 +43,33 @@ class Router:
         obj = pickle.loads(data)
 
         types = {
-            'Onion' : self.handleOnion,
+            'Layer' : self.handleLayer,
          }
 
         func = types.get(type(obj).__name__, "unknownClass") 
         return func(obj, addr)
     
-    def handleOnion(self, onion, addr):
+    def handleLayer(self, layer, addr):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        nextHop = onion.popNextHop()
+        message = []
+        if isinstance(layer.message, list):
+            for chunk in layer.message:
+                decryptedChunk = self.key.decrypt(chunk)
+                message.append(decryptedChunk)
+        
+        message = b''.join(message)
+        hiddenLayer = pickle.loads(message)
+        lastMSG = not isinstance(hiddenLayer.message, list)
+        nextHop = hiddenLayer.hop
         if nextHop:
-            print("Received Message from:", addr, " Sending to:", nextHop)
+            print("Received Message from:", addr, " Sending to:", nextHop, " Content:", hiddenLayer.message)
             s.connect(nextHop)
-            message = onion.message.encode() if onion.last() else onion.serialize()
-            if len(onion.route) == 0: print("Last Hop Message:", message)
+            message = hiddenLayer.serialize() if not lastMSG else hiddenLayer.message.encode()
             s.send(message)
-
             response = s.recv(self.BUFFER_SIZE)
-            return response
+            response = self.key.encrypt(response, 128)
+            return response[0]
 
-
-    
     def InitializeServer(self):
         while(1):
             print("Router Accepting Connections")

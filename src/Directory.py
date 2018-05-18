@@ -4,7 +4,7 @@ from Shared import HostData
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
-BUFFER_SIZE = 2048
+BUFFER_SIZE = 10000000
 MAX_CONN = 1
 
 class Directory:
@@ -15,6 +15,7 @@ class Directory:
     self.BUFFER_SIZE = bufferSize
     self.MAX_CONN = maxConn
     self.routers = set()
+    self.public_keys = dict()
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.socket.bind((self.TCP_IP, self.TCP_PORT))
     self.socket.listen(self.MAX_CONN)
@@ -34,12 +35,15 @@ class Directory:
   def handleHostRequest(self, hostData, addr):
     print("Obj Found", hostData.port, flush=True)
     entry = (addr[0], hostData.port)
+    self.public_keys[addr[0] + str(hostData.port)] = hostData.publicKey
     self.routers.add(entry)
     print("Added Router Entry", entry, flush=True)
     print("Total Entries: ", len(self.routers), flush=True)
 
   def handleRouteRequest(self, HostData, addr):
-    return pickle.dumps(list(self.routers))
+    result = [ (router[0], router[1], self.public_keys[router[0]+str(router[1])])  for router in self.routers]
+
+    return pickle.dumps(result)
 
   def accept(self):
     while(True):

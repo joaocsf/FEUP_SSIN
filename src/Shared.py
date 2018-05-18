@@ -5,21 +5,20 @@ class Serializable:
         return pickle.dumps(self)
 
 class HostData(Serializable):
-    def __init__ (self, port):
+    def __init__ (self, port, publicKey):
         self.port = port
+        self.publicKey = publicKey
 
 class RouteRequest(Serializable): pass
 
+class Layer(Serializable):
+    def __init__ (self, hop, message):
+        self.hop = hop
+        self.message = message
+
 class Onion(Serializable):
-    def __init__ (self, route, message):
-        self.route = route
-        self. message = message
+    def __init__ (self):
+        self.layers = []
     
-    def popNextHop(self):
-        if len(self.route) == 0:
-            return False
-        return self.route.pop(0)
-    
-    def last(self):
-        return len(self.route) == 0
-    
+def split(str, num):
+  return [ str[start:start+num] for start in range(0, len(str), num)]

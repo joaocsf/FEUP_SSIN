@@ -4,7 +4,7 @@ from Shared import HostData
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5010
-BUFFER_SIZE = 2048
+BUFFER_SIZE = 10000000
 MESSAGE = "Potatos"
 MAX_CONN = 10
 
