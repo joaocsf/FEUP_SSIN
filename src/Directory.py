@@ -22,9 +22,13 @@ class Directory:
 
   def parseMsg (self, data, addr):
     obj = pickle.loads(data)
+    
+    types = {
+      'HostData' : self.handleHostRequest
+    }
 
-    if(type(obj) is HostData):
-      self.handleHostRequest(obj, addr) 
+    func = types.get(type(obj).__name__, "unknownClass")
+    func(obj, addr)
   
   def handleHostRequest(self, hostData, addr):
       print("Obj Found", hostData.port, flush=True)
@@ -40,8 +44,8 @@ class Directory:
       while True:
         data = clientSocket.recv(BUFFER_SIZE)
         if not data: break
-        self.parseMsg(data, addr)
-        clientSocket.send(data)
+        result = self.parseMsg(data, addr)
+        clientSocket.send(result)
       
       clientSocket.close()
 
