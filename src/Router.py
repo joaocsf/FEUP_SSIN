@@ -3,10 +3,11 @@ import pickle
 from Shared import HostData
 
 TCP_IP = '127.0.0.1'
-TCP_PORT = 5005
+TCP_PORT = 5006
 BUFFER_SIZE = 1024
 MESSAGE = "Potatos"
 MAX_CONN = 10
+
 
 class Router:
     def __init__ (self, ip, port, bufferSize, maxConn, serverData):
@@ -31,15 +32,16 @@ class Router:
         obj = pickle.loads(data)
 
         types = {
-            'Temp' : self.demoMsg
+            'Temp' : self.demoMsg,
+            'RouteRequest' : self.demoMsg,
          }
 
         func = types.get(type(obj).__name__, "unknownClass") 
-        func(obj, addr)
+        return func(obj, addr)
     
     def demoMsg(self, obj, addr):
         print(obj, addr)
-
+    
     def InitializeServer(self):
         while(1):
             (clientSocket, addr) = self.socket.accept()
@@ -51,3 +53,5 @@ class Router:
                 clientSocket.send(result)
             
             clientSocket.close()
+
+router = Router(TCP_IP, TCP_PORT, BUFFER_SIZE, MAX_CONN, ('127.0.0.1', 5005))

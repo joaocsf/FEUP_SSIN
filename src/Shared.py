@@ -7,3 +7,5 @@ class Serializable:
 class HostData(Serializable):
     def __init__ (self, port):
         self.port = port
+
+class RouteRequest(Serializable): pass

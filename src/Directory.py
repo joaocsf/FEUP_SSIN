@@ -24,18 +24,22 @@ class Directory:
     obj = pickle.loads(data)
     
     types = {
-      'HostData' : self.handleHostRequest
+      'HostData' : self.handleHostRequest,
+      'RouteRequest' : self.handleRouteRequest
     }
 
     func = types.get(type(obj).__name__, "unknownClass")
-    func(obj, addr)
+    return func(obj, addr)
   
   def handleHostRequest(self, hostData, addr):
-      print("Obj Found", hostData.port, flush=True)
-      entry = (addr[0], hostData.port)
-      self.routers.add(entry)
-      print("Added Router Entry", entry, flush=True)
-      print("Total Entries: ", len(self.routers), flush=True)
+    print("Obj Found", hostData.port, flush=True)
+    entry = (addr[0], hostData.port)
+    self.routers.add(entry)
+    print("Added Router Entry", entry, flush=True)
+    print("Total Entries: ", len(self.routers), flush=True)
+
+  def handleRouteRequest(self, HostData, addr):
+    return pickle.dumps(self.routers)
 
   def accept(self):
     while(True):
@@ -45,6 +49,7 @@ class Directory:
         data = clientSocket.recv(BUFFER_SIZE)
         if not data: break
         result = self.parseMsg(data, addr)
+        if not result: break
         clientSocket.send(result)
       
       clientSocket.close()
